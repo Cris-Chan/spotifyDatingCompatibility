@@ -32,7 +32,7 @@ export default function Home() {
           whileHover={{ scale: 1.1 }}
           transition={{
             opacity: {
-              delay: 1,
+              delay: 0.8,
               type: "spring",
               stiffness: 100,
               duration: 0.8,
