@@ -4,7 +4,7 @@ import { getAccessToken } from "@/utilities/spotifyApi";
 import { useSearchParams } from "next/navigation";
 import { useEffect } from "react";
 
-//TODO: make this a loading animation and upon successful fetch of acess toke, redirect to our main app page
+//TODO add a check to see if the user declined the request and redirect accordinlgy / check if thats best practice
 
 export default function SpotifyLink() {
   const searchParams = useSearchParams();

@@ -65,26 +65,31 @@ export const getAccessToken = async (code) => {
 };
 
 // get and return formatted user data into a concise profil
+// scope needed - user-top-read,
 export const fetchUserData = () => {
   // need the following:
   /*
    * top 20 artists
    * top 20 tracks
-   * top 5 genres
-     - extract top 5 genres based on top artist genres
-   * audio features - array sudo "embeddings" of the top tracks {the meta data spotify offers for each of the songs}
+  this should be all we need to make more calls for more data, and calculations
    */
 };
 
+export const calculateListeningProfile = (personData) => {
+  // return an array of what we have (top artists, topTracks)
+  // calculate list of all covered genres based on artists and tracks,
+  // gather vector of audio features from all top songs, calculate average of all to hold in a single vector for the user profile
+};
+
 // return the compatibility score (0-100)
-export const calculateCompatible = (person1, person2) => {
+export const calculateCompatible = (personProfile1, personProfile2) => {
   // we need to calculate the following factors
   /*
-    *  Audio feature similarity
+    *  Audio feature similarity - 50 points total
       - Calculate cosine similarity of audio feature vectors (higher = more compatible)
-    *  Artist overlap
+    *  Artist overlap - 10 points
       - calculate the percent overlap in all artist genres
-    *  Genre overlap 
+    *  Genre overlap - 40 points
       - calculate percent overlap of genre array
     
   */
