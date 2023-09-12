@@ -2,15 +2,10 @@
 import axios from "axios";
 import querystring from "querystring";
 
-//!! MAKE SURE LOGS ARE REMOVED BEFORE WE DEPLOY
 const client_id = process.env.NEXT_PUBLIC_CLIENT_ID;
-console.log("client_id -> ", client_id);
 const client_secret = process.env.NEXT_PUBLIC_CLIENT_SECRET;
-console.log("client_secret -> ", client_secret);
 const redirect_uri = "http://localhost:3000/spotifySuccess";
-console.log("redirect_uri -> ", redirect_uri);
 const scope = "user-read-private user-read-email";
-console.log("scope -> ", scope);
 
 // Function to initiate the OAuth process and redirect the user
 export const initiateSpotifyLogin = () => {
@@ -62,8 +57,35 @@ export const getAccessToken = async (code) => {
     });
 
     const data = await response.json();
+    console.log("spotify data: ", data);
     return data; // This will contain your access token
   } catch (error) {
     console.error("Error fetching access token", error);
   }
+};
+
+// get and return formatted user data into a concise profil
+export const fetchUserData = () => {
+  // need the following:
+  /*
+   * top 20 artists
+   * top 20 tracks
+   * top 5 genres
+     - extract top 5 genres based on top artist genres
+   * audio features - array sudo "embeddings" of the top tracks {the meta data spotify offers for each of the songs}
+   */
+};
+
+// return the compatibility score (0-100)
+export const calculateCompatible = (person1, person2) => {
+  // we need to calculate the following factors
+  /*
+    *  Audio feature similarity
+      - Calculate cosine similarity of audio feature vectors (higher = more compatible)
+    *  Artist overlap
+      - calculate the percent overlap in all artist genres
+    *  Genre overlap 
+      - calculate percent overlap of genre array
+    
+  */
 };
