@@ -9,6 +9,7 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@supabase/supabase-js": "^2.33.2",
     "autoprefixer": "10.4.15",
     "axios": "^1.5.0",
     "eslint": "8.49.0",
