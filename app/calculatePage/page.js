@@ -1,8 +1,9 @@
 "use client";
 import PageFadeIn from "@/Components/PageFadeIn";
+import Loading from "@/components/loading";
 import { getAccessToken } from "@/utilities/spotifyApi";
 import { useSearchParams } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 
 /*
 
@@ -26,22 +27,33 @@ import { useEffect } from "react";
 
 export default function CalculatePage() {
   const searchParams = useSearchParams();
+  const [buddyCode, setBuddyCode] = useState(null);
+  const [accessToken, setAccessToken] = useState(null);
+  const [fetchingMusicData, setFetchindMusicData] = useState(true);
 
+  // get spotify auth, so we can get yummy data mmmmm
+  // gets buddyCode if user is from buddy link,
+  // gets accessToken since spotify access has been granted.
   useEffect(() => {
     const code = searchParams.get("code");
-    const state = searchParams.get("state");
+    const state = searchParams.get("state"); // we dont use this yet, leaving in for later
+
+    setBuddyCode(localStorage.getItem("buddycode"));
+    console.log("buddyCode: ", buddyCode);
     if (code) {
       const fetchAccessToken = async () => {
         const data = await getAccessToken(code);
-        console.log("OK LEST GOO: ", data);
+        setAccessToken(data.accessToken);
+        console.log("acess token successfully aquired 😛: ", data);
       };
       fetchAccessToken();
     }
   }, [searchParams]);
+
   return (
     <PageFadeIn>
       <div className="flex  flex-col items-center justify-center min-h-screen py-2 text-center">
-        <h1>SUCCESS</h1>
+        {fetchingMusicData ? <Loading /> : <h1 className="text-2xl">hehe</h1>}
       </div>
     </PageFadeIn>
   );
