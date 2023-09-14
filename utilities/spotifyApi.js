@@ -4,22 +4,44 @@ import querystring from "querystring";
 
 const client_id = process.env.NEXT_PUBLIC_CLIENT_ID;
 const client_secret = process.env.NEXT_PUBLIC_CLIENT_SECRET;
-const redirect_uri = "http://localhost:3000/spotifySuccess";
+const redirect_uri = "http://localhost:3000/calculatePage";
 const scope = "user-read-private user-read-email";
 
-// Function to initiate the OAuth process and redirect the user
-export const initiateSpotifyLogin = () => {
-  // TODO: utilize state in a cookie for extra authentication. for now lets just circel back later
-  const state = generateRandomString(16);
+// Function to initiate the OAuth process and redirect the user, returns promise
+export const initiateSpotifyLogin = (string) => {
+  return new Promise((resolve, reject) => {
+    // Generate the state and save it in the session storage
+    const state = generateRandomString(16);
+    sessionStorage.setItem("spotify_auth_state", state);
 
-  const queryParams = querystring.stringify({
-    response_type: "code",
-    client_id,
-    scope,
-    redirect_uri,
-    state,
+    const queryParams = querystring.stringify({
+      response_type: "code",
+      client_id,
+      scope,
+      redirect_uri: string ? string : redirect_uri,
+      state,
+    });
+
+    // Open the Spotify login page in a new window
+    const authWindow = window.open(
+      `https://accounts.spotify.com/authorize?${queryParams}`
+    );
+
+    // Listen for a message from the authWindow
+    window.addEventListener("message", (event) => {
+      // Check if the message came from the authWindow
+      if (event.source === authWindow) {
+        // Check if the state matches the one we saved earlier
+        if (event.data.state === sessionStorage.getItem("spotify_auth_state")) {
+          // The login was successful, resolve the promise
+          resolve(true);
+        } else {
+          // The state didn't match, reject the promise
+          reject(new Error("State mismatch"));
+        }
+      }
+    });
   });
-  window.location = `https://accounts.spotify.com/authorize?${queryParams}`;
 };
 
 // Function to generate a random string for the OAuth state parameter

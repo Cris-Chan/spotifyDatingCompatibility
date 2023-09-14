@@ -4,9 +4,27 @@ import { getAccessToken } from "@/utilities/spotifyApi";
 import { useSearchParams } from "next/navigation";
 import { useEffect } from "react";
 
-//TODO add a check to see if the user declined the request and redirect accordinlgy / check if thats best practice
+/*
 
-export default function SpotifyLink() {
+ * check for buddy code: 
+  null -> start share flow*
+  yes -> start calculate flow
+
+ * SHARE FLOW
+  --loading
+  make music profile from spotify data
+  generate buddy code and store data in DB
+  --
+  show share buttong with search parameter including buddy code
+
+  await DB entry with same buddy code 🧑‍💻 (timeout after 5 minutes) -> .then calculate flow
+
+  * calculate flow
+    - uhm yea p self exp[lanitory, render ui and show score
+
+*/
+
+export default function CalculatePage() {
   const searchParams = useSearchParams();
 
   useEffect(() => {

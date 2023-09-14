@@ -2,6 +2,7 @@
 import { motion } from "framer-motion";
 import PageFadeIn from "@/Components/PageFadeIn";
 import Link from "next/link";
+import { supabase } from "@/utilities/initSupa";
 
 export default function Home() {
   return (
@@ -41,7 +42,7 @@ export default function Home() {
           }}
           className=" rounded bg-white text-black p-3 m-4"
         >
-          <Link className={"font-josefin"} href={"/spotifyLink"}>
+          <Link className={"font-josefin"} href={"/spotifySetup"}>
             Try it out
           </Link>
         </motion.div>
