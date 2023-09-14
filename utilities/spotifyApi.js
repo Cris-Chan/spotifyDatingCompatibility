@@ -88,7 +88,7 @@ export const getAccessToken = async (code) => {
 
 // get and return formatted user data into a concise profil
 // scope needed - user-top-read,
-export const fetchUserData = () => {
+export const fetchUserData = (token) => {
   // need the following:
   /*
    * top 20 artists
