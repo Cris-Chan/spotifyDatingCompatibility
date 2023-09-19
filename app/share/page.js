@@ -10,17 +10,25 @@ import { useRouter } from "next/navigation";
 export default function Share() {
   const router = useRouter();
   const [buddyData, setBuddyData] = useState(null);
-  const buddyID = localStorage.getItem("buddyID") || uuidv4();
-  localStorage.setItem("buddyID", buddyID);
+  let buddyID = localStorage.getItem("buddyID");
+  if (!buddyID) {
+    buddyID = uuidv4();
+    localStorage.setItem("buddyID", buddyID);
+  }
 
   console.log("buddy: " + buddyID);
 
   useEffect(() => {
     const fetchBuddyData = async () => {
+      let userName = JSON.parse(localStorage.getItem("userData")).name;
       let { data, error } = await supabase
         .from("user_music_data")
         .select("*")
-        .eq("BuddyID", buddyID);
+        .eq("BuddyID", buddyID)
+        .neq("user_name", userName);
+
+      // Filter out the data that doesn't match the specific user_name
+      let otherUserData = data.filter((user) => user.user_name !== userName);
 
       if (error) {
         console.log("AY CARAMBA!");
@@ -28,6 +36,7 @@ export default function Share() {
         console.log(data);
         setBuddyData(data);
         if (data && data.length > 0) {
+          localStorage.setItem("buddyDBData", JSON.stringify(data[0]));
           router.replace("/calculate");
         }
       }
@@ -72,7 +81,9 @@ export default function Share() {
             const shareData = {
               title: "Music + Love",
               text: "Check out this cool app!",
-              url: process.env.NEXT_PUBLIC_REDIRECT_URL,
+              url: `${
+                process.env.NEXT_PUBLIC_REDIRECT_URL
+              }?buddyID=${localStorage.getItem("buddyID")}`,
             };
             try {
               if (navigator.share) {

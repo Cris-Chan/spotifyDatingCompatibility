@@ -4,7 +4,7 @@ import querystring from "querystring";
 
 const client_id = process.env.NEXT_PUBLIC_CLIENT_ID;
 const client_secret = process.env.NEXT_PUBLIC_CLIENT_SECRET;
-const redirect_uri = "http://localhost:3000/calculatePage";
+const redirect_uri = process.env.NEXT_PUBLIC_REDIRECT_URL;
 const scope = "user-read-private user-read-email user-top-read";
 
 // Function to initiate the OAuth process and redirect the user, returns promise
@@ -41,7 +41,6 @@ const generateRandomString = (length) => {
   return text;
 };
 
-//!! Internal function
 export const getAccessToken = async (code, redirect_uri) => {
   const form = {
     code: code,
@@ -83,14 +82,18 @@ export const fetchUserData = async (token) => {
         headers: { Authorization: `Bearer ${token}` },
       }
     );
-    const genres = new Set(
-      topArtistResponse.data.items.flatMap((artist) => artist.genres)
+    const genres = Array.from(
+      new Set(topArtistResponse.data.items.flatMap((artist) => artist.genres))
     );
     const name = profileResponse.data.display_name;
     const topArtists = topArtistResponse.data.items.map(
       (artist) => artist.name
     );
-    const topSongs = topSongsResponse.data.items.map((song) => song.name);
+    const topSongs = topSongsResponse.data.items.map((song) => ({
+      name: song.name,
+      id: song.id,
+      popularity: song.popularity,
+    }));
 
     console.log("DATA AQUIRED: ", name, topArtists, topSongs, genres);
     return { name, topArtists, topSongs, genres };
@@ -98,4 +101,94 @@ export const fetchUserData = async (token) => {
     console.error("Error fetching user data: ", error);
     throw error;
   }
+};
+export const getEmbeddings = async (genreArray) => {
+  console.log("embeddings soon to be's : " + genreArray);
+  const headers = {
+    Authorization: `Bearer ${process.env.NEXT_PUBLIC_OPENAI_KEY}`,
+    "Content-Type": "application/json",
+  };
+
+  const requests = genreArray.map((genre) => {
+    const data = {
+      input: genre,
+      model: "text-embedding-ada-002",
+    };
+
+    return axios.post("https://api.openai.com/v1/embeddings", data, {
+      headers,
+    });
+  });
+
+  try {
+    const responses = await Promise.all(requests);
+    return responses.map((response) => response.data.data[0].embedding);
+  } catch (error) {
+    console.error(error);
+    throw error;
+  }
+};
+
+export const calculateSumEmbedding = (embeddings) => {
+  // Ensure that the embeddings array is in the correct format
+  if (!Array.isArray(embeddings) || !embeddings.every(Array.isArray)) {
+    throw new Error(
+      "Invalid format for embeddings. Expected an array of arrays."
+    );
+  }
+
+  const sum = embeddings.reduce((acc, curr) => {
+    // Ensure that each embedding is of the correct length
+    if (curr.length !== 1536) {
+      throw new Error(
+        "Invalid format for individual embedding. Expected an array of length 1536."
+      );
+    }
+
+    return acc.map((num, idx) => num + curr[idx]);
+  }, new Array(embeddings[0].length).fill(0));
+
+  return sum;
+};
+export const calculateCompatibilityScore = (embeddings1, embeddings2) => {
+  // Ensure that the embeddings arrays are in the correct format
+  if (
+    !Array.isArray(embeddings1) ||
+    !embeddings1.every(Array.isArray) ||
+    !Array.isArray(embeddings2) ||
+    !embeddings2.every(Array.isArray)
+  ) {
+    throw new Error(
+      "Invalid format for embeddings. Expected an array of arrays."
+    );
+  }
+
+  // Ensure that each embedding is of the correct length
+  if (embeddings1[0].length !== 1536 || embeddings2[0].length !== 1536) {
+    throw new Error(
+      "Invalid format for individual embedding. Expected an array of length 1536."
+    );
+  }
+
+  // Calculate the dot product of the two embeddings
+  let dotProduct = 0;
+  for (let i = 0; i < embeddings1[0].length; i++) {
+    dotProduct += embeddings1[0][i] * embeddings2[0][i];
+  }
+
+  // Calculate the magnitude of the two embeddings
+  let magnitude1 = 0;
+  let magnitude2 = 0;
+  for (let i = 0; i < embeddings1[0].length; i++) {
+    magnitude1 += embeddings1[0][i] * embeddings1[0][i];
+    magnitude2 += embeddings2[0][i] * embeddings2[0][i];
+  }
+  magnitude1 = Math.sqrt(magnitude1);
+  magnitude2 = Math.sqrt(magnitude2);
+
+  // Calculate the cosine similarity and scale it to a score between 1 and 100
+  const cosineSimilarity = dotProduct / (magnitude1 * magnitude2);
+  const score = Math.round(cosineSimilarity * 100); // scale from 0-1 to 1-100 and round to the nearest whole number
+
+  return cosineSimilarity;
 };
