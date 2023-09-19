@@ -10,190 +10,26 @@ import { useEffect, useState } from "react";
 
 export default function Calculate() {
   const currentUserData = JSON.parse(localStorage.getItem("userData"));
-  //example of format:
-  /*
-  {
-  "name": "Cristian Villanueva",
-  "genres": [
-    "chicago rap",
-    "hip hop",
-    "rap",
-    "boy band",
-    "lo-fi cover",
-    "lo-fi product",
-    "indie folk",
-    "pop folk",
-    "stomp and flutter",
-    "stomp and holler",
-    "atlanta indie",
-    "indie pop",
-    "la pop",
-    "pov: indie",
-    "indie rock",
-    "filter house",
-    "indie soul",
-    "conscious hip hop",
-    "west coast rap",
-    "alternative r&b",
-    "uk contemporary r&b",
-    "atl hip hop",
-    "bedroom pop",
-    "la indie",
-    "vancouver indie",
-    "lgbtq+ hip hop",
-    "neo soul",
-    "alternative pop rock",
-    "indie electropop",
-    "pittsburgh rap",
-    "pop rap",
-    "korean indie folk",
-    "korean r&b"
-  ],
-  "topSongs": [
-    {
-      "id": "1geSWiwEHkfhPWoEpXB9Gj",
-      "name": "So Free",
-      "popularity": 40
-    },
-    {
-      "id": "0MH2fBfdoOl17OSbmrwClC",
-      "name": "Better Than",
-      "popularity": 16
-    },
-    {
-      "id": "2lTtnKQgjbrBA1qnOFhBkP",
-      "name": "affection",
-      "popularity": 1
-    },
-    {
-      "id": "6nl9BAvm7wMV2mEEChRzA9",
-      "name": "Rubble To Rubble",
-      "popularity": 0
-    },
-    {
-      "id": "7IJlk42gDKt5dfSSLwtEsp",
-      "name": "Chinese Translation",
-      "popularity": 0
-    },
-    {
-      "id": "6yu0UegX2qMKcKvTurlWe2",
-      "name": "Misery Is You",
-      "popularity": 28
-    },
-    {
-      "id": "2k9N4caeCIJLOWwWwssrEM",
-      "name": "Easily",
-      "popularity": 3
-    },
-    {
-      "id": "2QHYdxr6Perz2Z7vJ0DszE",
-      "name": "Kinship",
-      "popularity": 9
-    },
-    {
-      "id": "2ZDRA0S22sue6jpghf2qol",
-      "name": "Down The Line",
-      "popularity": 53
-    },
-    {
-      "id": "2mj3wofiytzLRepX5OZjLT",
-      "name": "Logan Paul",
-      "popularity": 23
-    },
-    {
-      "id": "3bj0otfkHV2NB3NBCjLZKL",
-      "name": "Reverence",
-      "popularity": 17
-    },
-    {
-      "id": "2y9xyQNtut1KeOHSSkuzik",
-      "name": "DÁKITI – Spotify Singles",
-      "popularity": 48
-    },
-    {
-      "id": "4FF0tP9mkoiFKLiXFeXm0q",
-      "name": "Cotton Candy",
-      "popularity": 57
-    },
-    {
-      "id": "6Wu19AEKVNs5bJFuhZb4EZ",
-      "name": "Second Chances",
-      "popularity": 60
-    },
-    {
-      "id": "4iJyoBOLtHqaGxP12qzhQI",
-      "name": "Peaches (feat. Daniel Caesar & Giveon)",
-      "popularity": 83
-    },
-    {
-      "id": "78LMazmfqncADjyJVae8dN",
-      "name": "Anything You Want",
-      "popularity": 64
-    },
-    {
-      "id": "0ygr1n1Xk1UvWrzJXjVVng",
-      "name": "iloveyou",
-      "popularity": 0
-    },
-    {
-      "id": "4q6OvSJnqxZZ3N13QRRzrX",
-      "name": "The Trees",
-      "popularity": 47
-    },
-    {
-      "id": "4j8Dz7TdDXoJ2z5zhqEwYX",
-      "name": "Sagittarius Superstar (feat. Faye Webster)",
-      "popularity": 0
-    },
-    {
-      "id": "1rJRb5A6ZfqOuqLCwpD7Ld",
-      "name": "Calvaire",
-      "popularity": 50
-    }
-  ],
-  "topArtists": [
-    "Kanye West",
-    "BROCKHAMPTON",
-    "Lofi Fruits Music",
-    "Gregory Alan Isakov",
-    "Faye Webster",
-    "BETWEEN FRIENDS",
-    "Goth Babe",
-    "FKJ",
-    "Kendrick Lamar",
-    "Col3trane",
-    "Noname",
-    "Childish Gambino",
-    "The Marías",
-    "Odie Leigh",
-    "Peach Pit",
-    "Frank Ocean",
-    "Dominic Fike",
-    "Grady",
-    "Mac Miller",
-    "HYUKOH"
-  ]
-}
-  */
   let buddyUserData = JSON.parse(localStorage.getItem("buddyDBData"));
+
   // Check if the data is an array with a single object and if so, extract that object
+  // aka normalizing the data
   if (Array.isArray(buddyUserData) && buddyUserData.length === 1) {
     buddyUserData = buddyUserData[0];
   }
   console.log("Buddy User Data: ", buddyUserData);
-  buddyUserData = buddyUserData.MusicProfile;
+  if (buddyUserData) {
+    buddyUserData = buddyUserData.MusicProfile;
+  }
   // Check if the data is an array with a single object and if so, extract that object
-
   const [score, setScore] = useState("...");
   console.log("Current User Data: ", currentUserData);
   console.log("Buddy User Data: ", buddyUserData);
 
-  const [myEmbeds, setMyEmbeds] = useState([]);
-
   useEffect(() => {
     const fetchEmbeds = async () => {
-      const userEmbeds = await getEmbeddings(currentUserData.genres);
-      const buddyEmbeds = await getEmbeddings(buddyUserData.genres);
+      const userEmbeds = currentUserData.embeddings; // spotify metrics from all top songs. format: [[songdata]]
+      const buddyEmbeds = buddyUserData.embeddings; // spotify metrics from all top songs. format: [[songdata]]
       console.log("User Embeds: ", userEmbeds);
       console.log("Buddy Embeds: ", buddyEmbeds);
 
@@ -201,8 +37,8 @@ export default function Calculate() {
       const buddyAverageEmbedding = calculateSumEmbedding(buddyEmbeds);
 
       const compatibilityScore = calculateCompatibilityScore(
-        [userAverageEmbedding],
-        [buddyAverageEmbedding]
+        userAverageEmbedding,
+        buddyAverageEmbedding
       );
 
       setScore(compatibilityScore);

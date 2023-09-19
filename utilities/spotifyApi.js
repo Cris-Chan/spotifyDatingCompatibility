@@ -65,6 +65,36 @@ export const getAccessToken = async (code, redirect_uri) => {
     throw error;
   }
 };
+
+const getTrackMetrics = async (IdList, token) => {
+  // take a list of music ID's
+  // return a list of arrays with metric data (sudo embeddings)
+  try {
+    const idString = IdList.join(",");
+    const metricArrayList = await axios
+      .get(`https://api.spotify.com/v1/audio-features?ids=${idString}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      .then((response) => {
+        console.log("response for track data: ", response);
+        return response.data.audio_features.map((trackdata) => {
+          return [
+            trackdata.acousticness,
+            trackdata.danceability,
+            trackdata.energy,
+            trackdata.instrumentalness,
+            trackdata.liveness,
+            trackdata.speechiness,
+            trackdata.valence,
+          ];
+        });
+      });
+    return metricArrayList;
+  } catch (error) {
+    console.log("error getting the track metrics: " + error);
+  }
+};
+
 export const fetchUserData = async (token) => {
   try {
     const profileResponse = await axios.get("https://api.spotify.com/v1/me", {
@@ -82,6 +112,7 @@ export const fetchUserData = async (token) => {
         headers: { Authorization: `Bearer ${token}` },
       }
     );
+
     const genres = Array.from(
       new Set(topArtistResponse.data.items.flatMap((artist) => artist.genres))
     );
@@ -95,8 +126,20 @@ export const fetchUserData = async (token) => {
       popularity: song.popularity,
     }));
 
-    console.log("DATA AQUIRED: ", name, topArtists, topSongs, genres);
-    return { name, topArtists, topSongs, genres };
+    const embeddings = await getTrackMetrics(
+      topSongs.map((songObject) => songObject.id),
+      token
+    );
+
+    console.log(
+      "DATA AQUIRED: ",
+      name,
+      topArtists,
+      topSongs,
+      genres,
+      embeddings
+    );
+    return { name, topArtists, topSongs, genres, embeddings };
   } catch (error) {
     console.error("Error fetching user data: ", error);
     throw error;
@@ -130,65 +173,48 @@ export const getEmbeddings = async (genreArray) => {
 };
 
 export const calculateSumEmbedding = (embeddings) => {
-  // Ensure that the embeddings array is in the correct format
-  if (!Array.isArray(embeddings) || !embeddings.every(Array.isArray)) {
-    throw new Error(
-      "Invalid format for embeddings. Expected an array of arrays."
-    );
-  }
-
   const sum = embeddings.reduce((acc, curr) => {
-    // Ensure that each embedding is of the correct length
-    if (curr.length !== 1536) {
-      throw new Error(
-        "Invalid format for individual embedding. Expected an array of length 1536."
-      );
-    }
-
     return acc.map((num, idx) => num + curr[idx]);
   }, new Array(embeddings[0].length).fill(0));
 
   return sum;
 };
+const weights = [
+  0.1, // acousticness
+  0.2, // danceability
+  0.15, // energy
+  0.05, // instrumentalness
+  0.1, // liveness
+  0.1, // speechiness
+  0.2, // valence
+];
+
+// Sensitivity factor for adjusting the score, higher value makes the score more sensitive to differences
+// Adjust this value to make the score more or less sensitive to differences in the embeddings
+const sensitivity = 0.8;
+
 export const calculateCompatibilityScore = (embeddings1, embeddings2) => {
-  // Ensure that the embeddings arrays are in the correct format
-  if (
-    !Array.isArray(embeddings1) ||
-    !embeddings1.every(Array.isArray) ||
-    !Array.isArray(embeddings2) ||
-    !embeddings2.every(Array.isArray)
-  ) {
-    throw new Error(
-      "Invalid format for embeddings. Expected an array of arrays."
-    );
-  }
-
-  // Ensure that each embedding is of the correct length
-  if (embeddings1[0].length !== 1536 || embeddings2[0].length !== 1536) {
-    throw new Error(
-      "Invalid format for individual embedding. Expected an array of length 1536."
-    );
-  }
-
-  // Calculate the dot product of the two embeddings
   let dotProduct = 0;
-  for (let i = 0; i < embeddings1[0].length; i++) {
-    dotProduct += embeddings1[0][i] * embeddings2[0][i];
-  }
-
-  // Calculate the magnitude of the two embeddings
   let magnitude1 = 0;
   let magnitude2 = 0;
-  for (let i = 0; i < embeddings1[0].length; i++) {
-    magnitude1 += embeddings1[0][i] * embeddings1[0][i];
-    magnitude2 += embeddings2[0][i] * embeddings2[0][i];
+
+  console.log("embeddings1:", embeddings1);
+  console.log("embeddings2:", embeddings2);
+  console.log("weights:", weights);
+  console.log("sensitivity:", sensitivity);
+
+  for (let i = 0; i < embeddings1.length; i++) {
+    dotProduct += weights[i] * embeddings1[i] * embeddings2[i];
+    magnitude1 += weights[i] * Math.pow(embeddings1[i], 2);
+    magnitude2 += weights[i] * Math.pow(embeddings2[i], 2);
   }
+
   magnitude1 = Math.sqrt(magnitude1);
   magnitude2 = Math.sqrt(magnitude2);
 
-  // Calculate the cosine similarity and scale it to a score between 1 and 100
-  const cosineSimilarity = dotProduct / (magnitude1 * magnitude2);
-  const score = Math.round(cosineSimilarity * 100); // scale from 0-1 to 1-100 and round to the nearest whole number
+  // Calculate cosine similarity and convert it to a score between 1 and 100
+  const similarity = dotProduct / (magnitude1 * magnitude2);
+  const score = Math.round(((similarity + 1) / 2) * 100 * sensitivity); // cosine similarity ranges from -1 to 1, so we normalize it to 0-1
 
-  return cosineSimilarity;
+  return score;
 };
