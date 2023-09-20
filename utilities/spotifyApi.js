@@ -190,5 +190,5 @@ export const calculateCompatibilityScore = (embeddings1, embeddings2) => {
   const cosineSimilarity = dotProduct / (magnitude1 * magnitude2);
   const score = Math.round(cosineSimilarity * 100); // scale from 0-1 to 1-100 and round to the nearest whole number
 
-  return cosineSimilarity;
+  return score;
 };
