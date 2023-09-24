@@ -18,10 +18,8 @@ export default function Home() {
     <PageFadeIn>
       <div className="flex flex-col items-center justify-center min-h-screen py-2 text-center">
         <div>
-          <h1 className={`font-josefinBold text-9xl text-[#1DB954]`}>
-            MUSIC +
-          </h1>
-          <h1 className={`font-josefinBold text-9xl`}>LOVE?</h1>
+          <h1 className={`font-puffy text-9xl text-[#1DB954]`}>MUSIC +</h1>
+          <h1 className={`font-puffy text-9xl`}>LOVE?</h1>
           <motion.h3
             className={`font-josefin`}
             initial={{ opacity: 0, y: 20 }}
