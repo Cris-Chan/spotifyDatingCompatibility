@@ -3,9 +3,17 @@ import { motion } from "framer-motion";
 import PageFadeIn from "@/components/PageFadeIn";
 import Link from "next/link";
 import { supabase } from "@/utilities/initSupa";
+import { useEffect } from "react";
 
 export default function Home() {
-  localStorage.clear(); //! THIS IS FOR TESTING, CLEAR THIS
+  console.log("Component rendering");
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      console.log("PAGE RENDERING (app)");
+      localStorage.clear(); //! THIS IS FOR TESTING, CLEAR THIS
+    }
+  }, []);
   return (
     <PageFadeIn>
       <div className="flex flex-col items-center justify-center min-h-screen py-2 text-center">

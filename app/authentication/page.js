@@ -105,25 +105,29 @@ export default function Authentication() {
 
   // use effect routes to spotify if initial load. store the user data, push to DB, navigate aaway depending on user status
   useEffect(() => {
-    if (!accessCode) {
-      initiateSpotifyLogin(process.env.NEXT_PUBLIC_REDIRECT_URL);
-    } else {
-      getUserData(accessCode).then(async (musicData) => {
-        localStorage.setItem("userData", JSON.stringify(musicData));
-        console.log("User data acquired: ", musicData);
+    if (typeof window !== "undefined") {
+      if (!accessCode) {
+        initiateSpotifyLogin(process.env.NEXT_PUBLIC_REDIRECT_URL);
+      } else {
+        getUserData(accessCode).then(async (musicData) => {
+          localStorage.setItem("userData", JSON.stringify(musicData));
+          console.log("User data acquired: ", musicData);
 
-        await storeUserData(musicData, localStorage.getItem("buddyID"));
+          await storeUserData(musicData, localStorage.getItem("buddyID"));
 
-        if (localStorage.getItem("userType") == "buddy") {
-          // get buddy's data and store it
-          // we now should have both user and buddy data stored
-          getAndStoreNonBuddyData(buddyID);
-          route.replace("/calculate");
-        } else if (localStorage.getItem("userType") == "non-buddy") {
-          // we should have user data stored by now -> move to share screen and await buddy data
-          route.replace("/share");
-        }
-      });
+          if (localStorage.getItem("userType") == "buddy") {
+            // get buddy's data and store it
+            // we now should have both user and buddy data stored
+            getAndStoreNonBuddyData(buddyID).then(() => {
+              // Only route to calculate once getAndStoreNonBuddyData resolves
+              route.replace("/calculate");
+            });
+          } else if (localStorage.getItem("userType") == "non-buddy") {
+            // we should have user data stored by now -> move to share screen and await buddy data
+            route.replace("/share");
+          }
+        });
+      }
     }
   }, []);
 

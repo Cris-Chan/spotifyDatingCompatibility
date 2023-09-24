@@ -10,17 +10,32 @@ import { useRouter } from "next/navigation";
 export default function Share() {
   const router = useRouter();
   const [buddyData, setBuddyData] = useState(null);
-  let buddyID = localStorage.getItem("buddyID");
-  if (!buddyID) {
-    buddyID = uuidv4();
-    localStorage.setItem("buddyID", buddyID);
-  }
+  const [buddyID, setBuddyID] = useState(null);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      let localBuddyID = window.localStorage.getItem("buddyID");
+      if (!localBuddyID) {
+        localBuddyID = uuidv4();
+        window.localStorage.setItem("buddyID", localBuddyID);
+      }
+      setBuddyID(localBuddyID);
+    }
+  }, []);
 
   console.log("buddy: " + buddyID);
 
   useEffect(() => {
     const fetchBuddyData = async () => {
-      let userName = JSON.parse(localStorage.getItem("userData")).name;
+      let userData = null;
+      if (typeof window !== "undefined") {
+        userData = window.localStorage.getItem("userData");
+      }
+      if (!userData) {
+        console.log("No user data found in local storage.");
+        return;
+      }
+      let userName = JSON.parse(userData).name;
       let { data, error } = await supabase
         .from("user_music_data")
         .select("*")
@@ -28,15 +43,22 @@ export default function Share() {
         .neq("user_name", userName);
 
       // Filter out the data that doesn't match the specific user_name
-      let otherUserData = data.filter((user) => user.user_name !== userName);
+      let otherUserData = data
+        ? data.filter((user) => user.user_name !== userName)
+        : [];
 
       if (error) {
         console.log("AY CARAMBA!");
       } else {
         console.log(data);
-        setBuddyData(data);
-        if (data && data.length > 0) {
-          localStorage.setItem("buddyDBData", JSON.stringify(data[0]));
+        setBuddyData(otherUserData);
+        if (otherUserData && otherUserData.length > 0) {
+          if (typeof window !== "undefined") {
+            window.localStorage.setItem(
+              "buddyDBData",
+              JSON.stringify(otherUserData[0])
+            );
+          }
           router.replace("/calculate");
         }
       }
@@ -49,7 +71,7 @@ export default function Share() {
 
     // Clean up the interval on component unmount
     return () => clearInterval(intervalId);
-  }, []);
+  }, [buddyID]);
 
   return (
     <PageFadeIn>
@@ -81,9 +103,7 @@ export default function Share() {
             const shareData = {
               title: "Music + Love",
               text: "Check out this cool app!",
-              url: `${
-                process.env.NEXT_PUBLIC_REDIRECT_URL
-              }?buddyID=${localStorage.getItem("buddyID")}`,
+              url: `${process.env.NEXT_PUBLIC_REDIRECT_URL}?buddyID=${buddyID}`,
             };
             try {
               if (navigator.share) {

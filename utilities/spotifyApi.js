@@ -9,6 +9,9 @@ const scope = "user-read-private user-read-email user-top-read";
 
 // Function to initiate the OAuth process and redirect the user, returns promise
 export const initiateSpotifyLogin = (string) => {
+  if (!string) {
+    throw new Error("Invalid redirect URI");
+  }
   return new Promise((resolve, reject) => {
     // Generate the state and save it in the session storage
     const state = generateRandomString(16);
@@ -30,6 +33,9 @@ export const initiateSpotifyLogin = (string) => {
 //!! Internal function
 // Function to generate a random string for the OAuth state parameter
 const generateRandomString = (length) => {
+  if (!length) {
+    throw new Error("Invalid length for random string");
+  }
   let text = "";
   const possible =
     "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
@@ -42,6 +48,9 @@ const generateRandomString = (length) => {
 };
 
 export const getAccessToken = async (code, redirect_uri) => {
+  if (!code || !redirect_uri) {
+    throw new Error("Invalid code or redirect URI");
+  }
   const form = {
     code: code,
     redirect_uri: redirect_uri,
@@ -66,6 +75,9 @@ export const getAccessToken = async (code, redirect_uri) => {
   }
 };
 export const fetchUserData = async (token) => {
+  if (!token) {
+    throw new Error("Invalid token");
+  }
   try {
     const profileResponse = await axios.get("https://api.spotify.com/v1/me", {
       headers: { Authorization: `Bearer ${token}` },
@@ -103,6 +115,9 @@ export const fetchUserData = async (token) => {
   }
 };
 export const getEmbeddings = async (genreArray) => {
+  if (!genreArray || !Array.isArray(genreArray)) {
+    throw new Error("Invalid genre array");
+  }
   console.log("embeddings soon to be's : " + genreArray);
   const headers = {
     Authorization: `Bearer ${process.env.NEXT_PUBLIC_OPENAI_KEY}`,
@@ -125,6 +140,7 @@ export const getEmbeddings = async (genreArray) => {
     return responses.map((response) => response.data.data[0].embedding);
   } catch (error) {
     console.error(error);
+    //!!HERE
     throw error;
   }
 };
@@ -135,6 +151,11 @@ export const calculateSumEmbedding = (embeddings) => {
     throw new Error(
       "Invalid format for embeddings. Expected an array of arrays."
     );
+  }
+
+  // If embeddings is an empty array, return an empty array
+  if (embeddings.length === 0) {
+    return [];
   }
 
   const sum = embeddings.reduce((acc, curr) => {
