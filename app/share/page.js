@@ -80,7 +80,7 @@ export default function Share() {
         <h1 className="font-josefinBold text-xl">
           Now share this link with your buddy!
           <br />
-          We will start calculating when they enter their info 😛
+          We will start calculating when they enter their info 💌
         </h1>
         <h5 className="font-josefin text-base">
           [the page will update when your friend clicks the link]

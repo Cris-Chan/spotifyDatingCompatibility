@@ -19,7 +19,10 @@ export const metadata = {
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="en" className={`${mod.variable} ${grot.variable}`}>
+    <html
+      lang="en"
+      className={`bg-[#FF004D] text-white ${mod.variable} ${grot.variable}`}
+    >
       <body className={grot.className}>{children}</body>
     </html>
   );

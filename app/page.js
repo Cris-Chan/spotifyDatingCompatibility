@@ -4,6 +4,9 @@ import PageFadeIn from "@/components/PageFadeIn";
 import Link from "next/link";
 import { supabase } from "@/utilities/initSupa";
 import { useEffect } from "react";
+import Image from "next/image";
+
+const imageSize = 100;
 
 export default function Home() {
   console.log("Component rendering");
@@ -18,10 +21,10 @@ export default function Home() {
     <PageFadeIn>
       <div className="flex flex-col items-center justify-center min-h-screen py-2 text-center">
         <div>
-          <h1 className={`font-puffy text-9xl text-[#1DB954]`}>MUSIC +</h1>
-          <h1 className={`font-puffy text-9xl`}>LOVE?</h1>
+          <h1 className={`drop-shadow-harsh font-puffy text-9xl`}>
+            SPOTIFY-MATES
+          </h1>
           <motion.h3
-            className={`font-josefin`}
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{
@@ -48,9 +51,10 @@ export default function Home() {
               },
               y: { delay: 1, type: "spring", stiffness: 100, duration: 0.8 },
             }}
-            className=" rounded bg-white text-black p-3 m-4"
+            className="text-black p-3 m-4 relative flex items-center justify-center"
           >
-            Try it out
+            <Image width={imageSize} height={imageSize} src="/heart.svg" />
+            <p className="absolute">Try it</p>
           </motion.div>
         </Link>
       </div>
