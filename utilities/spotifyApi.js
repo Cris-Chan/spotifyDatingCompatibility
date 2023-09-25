@@ -74,6 +74,20 @@ export const getAccessToken = async (code, redirect_uri) => {
     throw error;
   }
 };
+
+/**
+ * Fetches user data from Spotify API.
+ *
+ * @param {string} token - The access token for the Spotify API.
+ * @returns {Promise<Object>} A promise that resolves to an object containing user data:
+ * - name: The user's display name.
+ * - topArtists: An array of the user's top artists, each represented as an object with properties 'name', 'id', and 'popularity'.
+ * - topSongs: An array of the user's top songs, each represented as an object with properties 'name', 'id', and 'popularity'.
+ * - genres: An array of unique genres associated with the user's top artists.
+ * - topRelatedArtists: An array of artists related to the user's top artists.
+ * @throws {Error} If the token is invalid or if there is an error fetching the data.
+ */
+
 export const fetchUserData = async (token) => {
   if (!token) {
     throw new Error("Invalid token");
@@ -83,7 +97,7 @@ export const fetchUserData = async (token) => {
       headers: { Authorization: `Bearer ${token}` },
     });
     const topArtistResponse = await axios.get(
-      "https://api.spotify.com/v1/me/top/artists?time_range=long_term",
+      "https://api.spotify.com/v1/me/top/artists?time_range=long_term&limit=4",
       {
         headers: { Authorization: `Bearer ${token}` },
       }
@@ -98,8 +112,16 @@ export const fetchUserData = async (token) => {
       new Set(topArtistResponse.data.items.flatMap((artist) => artist.genres))
     );
     const name = profileResponse.data.display_name;
-    const topArtists = topArtistResponse.data.items.map(
-      (artist) => artist.name
+    const topArtists = topArtistResponse.data.items.map((artist) => ({
+      name: artist.name,
+      id: artist.id,
+      popularity: artist.popularity,
+    }));
+    const topRelatedArtistsNested = await Promise.all(
+      topArtists.map((artistObj) => fetchRelatedArtists(artistObj.id, token))
+    );
+    const topRelatedArtists = Array.from(
+      new Set(topRelatedArtistsNested.flat())
     );
     const topSongs = topSongsResponse.data.items.map((song) => ({
       name: song.name,
@@ -108,12 +130,63 @@ export const fetchUserData = async (token) => {
     }));
 
     console.log("DATA AQUIRED: ", name, topArtists, topSongs, genres);
-    return { name, topArtists, topSongs, genres };
+    return { name, topArtists, topSongs, genres, topRelatedArtists };
   } catch (error) {
     console.error("Error fetching user data: ", error);
     throw error;
   }
 };
+
+const fetchRelatedArtists = async (artistId, accessToken) => {
+  if (!artistId || !accessToken) {
+    throw new Error("Invalid artistId or accessToken");
+  }
+  try {
+    const response = await axios.get(
+      `https://api.spotify.com/v1/artists/${artistId}/related-artists`,
+      {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      }
+    );
+    const relatedArtists = response.data.artists.map((artist) => artist.name);
+    return relatedArtists;
+  } catch (error) {
+    console.error("Error fetching related artists: ", error);
+    throw error;
+  }
+};
+
+/**
+ * Calculates a similarity score based on the overlap between a user's top artists and a buddy's related artists.
+ *
+ * @param {Array<string>} topArtists - The user's top artists.
+ * @param {Array<string>} relatedArtists - The buddy's related artists.
+ * @returns {number} A score between 0 and 100 representing the percentage of the user's top artists that are also in the buddy's related artists.
+ * @throws {Error} If the input arrays are not valid.
+ */
+export const calculateArtistOverlapScore = (topArtists, relatedArtists) => {
+  if (!Array.isArray(topArtists) || !Array.isArray(relatedArtists)) {
+    console.error(
+      "Invalid input: both topArtists and relatedArtists must be arrays."
+    );
+    return 0;
+  }
+
+  if (topArtists.length === 0 || relatedArtists.length === 0) {
+    console.error(
+      "Invalid input: both topArtists and relatedArtists must not be empty."
+    );
+    return 0;
+  }
+
+  const overlap = topArtists.filter((artist) =>
+    relatedArtists.includes(artist)
+  );
+  const score = (overlap.length / topArtists.length) * 100;
+
+  return score;
+};
+
 export const getEmbeddings = async (genreArray) => {
   if (!genreArray || !Array.isArray(genreArray)) {
     throw new Error("Invalid genre array");

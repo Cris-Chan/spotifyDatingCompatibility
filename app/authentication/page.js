@@ -58,8 +58,8 @@ export default function Authentication() {
     return musicData;
   };
 
-  //no return, just gets and stores the other non buddy users data in local storage
-  const getAndStoreNonBuddyData = async (buddyCode) => {
+  //get buddy data from user base
+  const getAndStorebuddyDataFromDB = async (buddyCode) => {
     try {
       let userName = JSON.parse(localStorage.getItem("userData")).name;
       console.log("buddyCode: ", buddyCode);
@@ -118,8 +118,8 @@ export default function Authentication() {
           if (localStorage.getItem("userType") == "buddy") {
             // get buddy's data and store it
             // we now should have both user and buddy data stored
-            getAndStoreNonBuddyData(buddyID).then(() => {
-              // Only route to calculate once getAndStoreNonBuddyData resolves
+            getAndStorebuddyDataFromDB(buddyID).then(() => {
+              // Only route to calculate once getAndStorebuddyDataFromDB resolves
               route.replace("/calculate");
             });
           } else if (localStorage.getItem("userType") == "non-buddy") {
