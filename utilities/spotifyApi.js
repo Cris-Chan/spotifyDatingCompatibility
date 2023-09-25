@@ -183,7 +183,49 @@ export const calculateArtistOverlapScore = (topArtists, relatedArtists) => {
     relatedArtists.includes(artist)
   );
   const score = (overlap.length / topArtists.length) * 100;
+  console.log("ARTIST OVERLAP: " + score);
+  return score;
+};
 
+/**
+ * Calculates a similarity score based on the average popularity of top songs between two users.
+ *
+ * @param {Object} userData1 - The first user's data object.
+ * @param {Object} userData2 - The second user's data object.
+ * @returns {number} A score between 1 and 100 representing the similarity of the average popularity score for songs between the two users.
+ * @throws {Error} If the input objects are not valid.
+ */
+export const calculateSongPopularitySimilarityScore = (
+  userData1,
+  userData2
+) => {
+  if (!userData1 || !userData2) {
+    console.error(
+      "Invalid input: both userData1 and userData2 must be objects."
+    );
+    return 0;
+  }
+
+  if (
+    !Array.isArray(userData1.topSongs) ||
+    !Array.isArray(userData2.topSongs)
+  ) {
+    console.error(
+      "Invalid input: topSongs property of both userData1 and userData2 must be arrays."
+    );
+    return 0;
+  }
+
+  const averagePopularity1 =
+    userData1.topSongs.reduce((acc, song) => acc + song.popularity, 0) /
+    userData1.topSongs.length;
+  const averagePopularity2 =
+    userData2.topSongs.reduce((acc, song) => acc + song.popularity, 0) /
+    userData2.topSongs.length;
+
+  const score = 100 - Math.abs(averagePopularity1 - averagePopularity2); // The score is higher when the difference in average popularity is smaller
+
+  console.log("SONG POPULARITY SIMILARITY: " + score);
   return score;
 };
 
@@ -244,45 +286,33 @@ export const calculateSumEmbedding = (embeddings) => {
 
   return sum;
 };
-export const calculateCompatibilityScore = (embeddings1, embeddings2) => {
-  // Ensure that the embeddings arrays are in the correct format
-  if (
-    !Array.isArray(embeddings1) ||
-    !embeddings1.every(Array.isArray) ||
-    !Array.isArray(embeddings2) ||
-    !embeddings2.every(Array.isArray)
-  ) {
+
+export const calculateGenreOverlapScore = (userData1, userData2) => {
+  // Ensure that the user data objects are valid
+  if (!userData1 || !userData2) {
     throw new Error(
-      "Invalid format for embeddings. Expected an array of arrays."
+      "Invalid input: both userData1 and userData2 must be objects."
     );
   }
 
-  // Ensure that each embedding is of the correct length
-  if (embeddings1[0].length !== 1536 || embeddings2[0].length !== 1536) {
-    throw new Error(
-      "Invalid format for individual embedding. Expected an array of length 1536."
-    );
+  // Extract the genres from the user data objects
+  const genres1 = userData1.genres;
+  const genres2 = userData2.genres;
+
+  // Ensure that the genres are in the correct format
+  if (!Array.isArray(genres1) || !Array.isArray(genres2)) {
+    throw new Error("Invalid format for genres. Expected an array.");
   }
 
-  // Calculate the dot product of the two embeddings
-  let dotProduct = 0;
-  for (let i = 0; i < embeddings1[0].length; i++) {
-    dotProduct += embeddings1[0][i] * embeddings2[0][i];
-  }
+  // Calculate the overlap of the two genre arrays
+  const overlap = genres1.filter((genre) => genres2.includes(genre));
 
-  // Calculate the magnitude of the two embeddings
-  let magnitude1 = 0;
-  let magnitude2 = 0;
-  for (let i = 0; i < embeddings1[0].length; i++) {
-    magnitude1 += embeddings1[0][i] * embeddings1[0][i];
-    magnitude2 += embeddings2[0][i] * embeddings2[0][i];
-  }
-  magnitude1 = Math.sqrt(magnitude1);
-  magnitude2 = Math.sqrt(magnitude2);
+  // Calculate the score based on the overlap
+  const score =
+    (overlap.length / Math.max(genres1.length, genres2.length)) * 100;
 
-  // Calculate the cosine similarity and scale it to a score between 1 and 100
-  const cosineSimilarity = dotProduct / (magnitude1 * magnitude2);
-  const score = Math.round(cosineSimilarity * 100); // scale from 0-1 to 1-100 and round to the nearest whole number
-
-  return score;
+  // Round the score to the nearest whole number
+  const roundedScore = Math.round(score);
+  console.log("GENERE OVERLAP SCORE: " + roundedScore);
+  return roundedScore;
 };

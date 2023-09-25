@@ -7,6 +7,9 @@ import {
   calculateSumEmbedding,
   getEmbeddings,
   calculateCompatibilityScore,
+  calculateArtistOverlapScore,
+  calculateSongPopularitySimilarityScore,
+  calculateGenreOverlapScore,
 } from "@/utilities/spotifyApi";
 import { useEffect, useState } from "react";
 
@@ -42,34 +45,32 @@ export default function Calculate() {
     }
   }, []);
 
-  const [genreSimilarity, setGenreSimilarity] = useState("...");
-  const [artisstSimilarity, setArtistSimilarity] = useState("...");
-  const [uniquenessScore, setUniquenessScore] = useState("...");
-  const [topSongSimilarity, setTopSongSimilarity] = useState("...");
+  const [genreSimilarity, setGenreSimilarity] = useState(0);
+  const [artisstSimilarity, setArtistSimilarity] = useState(0);
+  const [uniquenessScore, setUniquenessScore] = useState(0);
+  const [topSongSimilarity, setTopSongSimilarity] = useState(0);
 
   useEffect(() => {
-    // set score (genre similarity)
-    //TODO: set artist similarity
-    //TODO: set uniqueness similarity
-    //TODO: set top song similarity
-    const fetchCalculations = async () => {
-      const userEmbeds = await getEmbeddings(currentUserData.genres || []);
-      const buddyEmbeds = await getEmbeddings(buddyUserData.genres || []);
-
-      const userAverageEmbedding = calculateSumEmbedding(userEmbeds);
-      const buddyAverageEmbedding = calculateSumEmbedding(buddyEmbeds);
-
-      let genreSimilarityCalc = 0;
-      if (userAverageEmbedding.length > 0 && buddyAverageEmbedding.length > 0) {
-        genreSimilarityCalc = calculateCompatibilityScore(
-          [userAverageEmbedding],
-          [buddyAverageEmbedding]
-        );
-      }
-
-      setGenreSimilarity(genreSimilarityCalc);
-    };
-    fetchCalculations();
+    //set all our data
+    if (
+      Object.keys(currentUserData).length > 0 &&
+      Object.keys(buddyUserData).length > 0
+    ) {
+      setArtistSimilarity(
+        calculateArtistOverlapScore(
+          currentUserData.topArtists.map((artistObj) => {
+            return artistObj.name;
+          }),
+          buddyUserData.topRelatedArtists
+        )
+      );
+      setUniquenessScore(
+        calculateSongPopularitySimilarityScore(currentUserData, buddyUserData)
+      );
+      setGenreSimilarity(
+        calculateGenreOverlapScore(currentUserData, buddyUserData)
+      );
+    }
   }, [currentUserData, buddyUserData]);
   return (
     <PageFadeIn>
@@ -93,22 +94,22 @@ export default function Calculate() {
             <LineGraph
               label={"Genre similarity"}
               totalValueAvailable={genreSimilarity || 0}
-              currentValue={100}
+              currentValue={genreSimilarity}
             />
             <LineGraph
               label={"Top Artist similarity"}
               totalValueAvailable={100}
-              currentValue={20}
+              currentValue={artisstSimilarity}
             />
             <LineGraph
               label={"Uniqueness similarity"}
               totalValueAvailable={100}
-              currentValue={40}
+              currentValue={uniquenessScore}
             />
             <LineGraph
               label={"Top Song similarity"}
               totalValueAvailable={100}
-              currentValue={100}
+              currentValue={topSongSimilarity}
             />
           </div>
         </div>
