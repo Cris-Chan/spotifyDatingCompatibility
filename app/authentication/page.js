@@ -50,12 +50,18 @@ export default function Authentication() {
   // ------------------------
 
   const getUserData = async (code) => {
-    const accessToken = await getAccessToken(
-      code,
-      process.env.NEXT_PUBLIC_REDIRECT_URL
-    );
-    const musicData = await fetchUserData(accessToken);
-    return musicData;
+    try {
+      const accessToken = await getAccessToken(
+        code,
+        process.env.NEXT_PUBLIC_REDIRECT_URL
+      );
+      const musicData = await fetchUserData(accessToken);
+      console.log("Successfully fetched user data: ", musicData);
+      return musicData;
+    } catch (error) {
+      console.error("Error fetching user data: ", error);
+      throw error;
+    }
   };
 
   //get buddy data from user base

@@ -129,8 +129,20 @@ export const fetchUserData = async (token) => {
       popularity: song.popularity,
     }));
 
+    const topSongsMetaData = await fetchSongFeatures(
+      topSongs.map((songObj) => songObj.id),
+      token
+    );
+
     console.log("DATA AQUIRED: ", name, topArtists, topSongs, genres);
-    return { name, topArtists, topSongs, genres, topRelatedArtists };
+    return {
+      name,
+      topArtists,
+      topSongs,
+      genres,
+      topRelatedArtists,
+      topSongsMetaData,
+    };
   } catch (error) {
     console.error("Error fetching user data: ", error);
     throw error;
@@ -155,34 +167,41 @@ const fetchRelatedArtists = async (artistId, accessToken) => {
     throw error;
   }
 };
-
 /**
  * Calculates a similarity score based on the overlap between a user's top artists and a buddy's related artists.
+ * The score will be the same regardless of the order of users.
  *
- * @param {Array<string>} topArtists - The user's top artists.
- * @param {Array<string>} relatedArtists - The buddy's related artists.
+ * @param {Object} userData1 - The first user's data object.
+ * @param {Object} userData2 - The second user's data object.
  * @returns {number} A score between 0 and 100 representing the percentage of the user's top artists that are also in the buddy's related artists.
- * @throws {Error} If the input arrays are not valid.
+ * @throws {Error} If the input objects are not valid.
  */
-export const calculateArtistOverlapScore = (topArtists, relatedArtists) => {
-  if (!Array.isArray(topArtists) || !Array.isArray(relatedArtists)) {
+export const calculateArtistOverlapScore = (userData1, userData2) => {
+  if (!userData1 || !userData2) {
     console.error(
-      "Invalid input: both topArtists and relatedArtists must be arrays."
+      "Invalid input: both userData1 and userData2 must be objects."
     );
     return 0;
   }
 
-  if (topArtists.length === 0 || relatedArtists.length === 0) {
+  const topArtists1 = userData1.topArtists.map((artistObj) => artistObj.name);
+  const topArtists2 = userData2.topArtists.map((artistObj) => artistObj.name);
+
+  if (topArtists1.length === 0 || topArtists2.length === 0) {
     console.error(
-      "Invalid input: both topArtists and relatedArtists must not be empty."
+      "Invalid input: both topArtists1 and topArtists2 must not be empty."
     );
     return 0;
   }
 
-  const overlap = topArtists.filter((artist) =>
-    relatedArtists.includes(artist)
-  );
-  const score = (overlap.length / topArtists.length) * 100;
+  const overlap1 = topArtists1.filter((artist) => topArtists2.includes(artist));
+  const overlap2 = topArtists2.filter((artist) => topArtists1.includes(artist));
+
+  const score1 = (overlap1.length / topArtists1.length) * 100;
+  const score2 = (overlap2.length / topArtists2.length) * 100;
+
+  const score = (score1 + score2) / 2;
+
   console.log("ARTIST OVERLAP: " + score);
   return score;
 };
@@ -315,4 +334,92 @@ export const calculateGenreOverlapScore = (userData1, userData2) => {
   const roundedScore = Math.round(score);
   console.log("GENERE OVERLAP SCORE: " + roundedScore);
   return roundedScore;
+};
+
+const fetchSongFeatures = async (songIds, accessToken) => {
+  if (!Array.isArray(songIds) || !accessToken) {
+    throw new Error("Invalid songIds or accessToken");
+  }
+  try {
+    const response = await axios.get(
+      `https://api.spotify.com/v1/audio-features?ids=${songIds.join(",")}`,
+      {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      }
+    );
+    return response.data.audio_features.map((feature) => {
+      const {
+        danceability,
+        energy,
+        instrumentalness,
+        liveness,
+        loudness,
+        speechiness,
+      } = feature;
+      return [
+        danceability,
+        energy,
+        instrumentalness,
+        liveness,
+        loudness,
+        speechiness,
+      ];
+    });
+  } catch (error) {
+    console.error("Error fetching song features: ", error);
+    throw error;
+  }
+};
+
+/**
+ * Calculates a similarity score based on the song features between two users.
+ *
+ * @param {Array<Array<number>>} songFeatures1 - The first user's song features.
+ * @param {Array<Array<number>>} songFeatures2 - The second user's song features.
+ * @returns {number} A score between 1 and 100 representing the similarity of the song features between the two users.
+ * @throws {Error} If the input arrays are not valid.
+ */
+export const calculateSongFeatureSimilarityScore = (
+  songFeatures1,
+  songFeatures2
+) => {
+  if (!Array.isArray(songFeatures1) || !Array.isArray(songFeatures2)) {
+    console.error(
+      "Invalid input: both songFeatures1 and songFeatures2 must be arrays."
+    );
+    return 0;
+  }
+
+  if (songFeatures1.length === 0 || songFeatures2.length === 0) {
+    console.error(
+      "Invalid input: both songFeatures1 and songFeatures2 must not be empty."
+    );
+    return 0;
+  }
+
+  const averageSongFeatures1 = songFeatures1
+    .reduce(
+      (acc, features) => acc.map((num, idx) => num + features[idx]),
+      new Array(songFeatures1[0].length).fill(0)
+    )
+    .map((num) => num / songFeatures1.length);
+  const averageSongFeatures2 = songFeatures2
+    .reduce(
+      (acc, features) => acc.map((num, idx) => num + features[idx]),
+      new Array(songFeatures2[0].length).fill(0)
+    )
+    .map((num) => num / songFeatures2.length);
+
+  const score =
+    100 -
+    (averageSongFeatures1.reduce(
+      (acc, feature, idx) =>
+        acc + Math.abs(feature - averageSongFeatures2[idx]),
+      0
+    ) /
+      averageSongFeatures1.length) *
+      100; // The score is higher when the difference in average features is smaller
+
+  console.log("SONG FEATURE SIMILARITY: " + score);
+  return score;
 };

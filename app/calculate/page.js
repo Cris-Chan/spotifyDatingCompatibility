@@ -10,6 +10,7 @@ import {
   calculateArtistOverlapScore,
   calculateSongPopularitySimilarityScore,
   calculateGenreOverlapScore,
+  calculateSongFeatureSimilarityScore,
 } from "@/utilities/spotifyApi";
 import { useEffect, useState } from "react";
 
@@ -57,18 +58,19 @@ export default function Calculate() {
       Object.keys(buddyUserData).length > 0
     ) {
       setArtistSimilarity(
-        calculateArtistOverlapScore(
-          currentUserData.topArtists.map((artistObj) => {
-            return artistObj.name;
-          }),
-          buddyUserData.topRelatedArtists
-        )
+        calculateArtistOverlapScore(currentUserData, buddyUserData)
       );
       setUniquenessScore(
         calculateSongPopularitySimilarityScore(currentUserData, buddyUserData)
       );
       setGenreSimilarity(
         calculateGenreOverlapScore(currentUserData, buddyUserData)
+      );
+      setTopSongSimilarity(
+        calculateSongFeatureSimilarityScore(
+          currentUserData.topSongsMetaData,
+          buddyUserData.topSongsMetaData
+        )
       );
     }
   }, [currentUserData, buddyUserData]);
@@ -93,7 +95,7 @@ export default function Calculate() {
           <div className="mt-6 flex flex-col min-w-full gap-4 items-center justify-center">
             <LineGraph
               label={"Genre similarity"}
-              totalValueAvailable={genreSimilarity || 0}
+              totalValueAvailable={100}
               currentValue={genreSimilarity}
             />
             <LineGraph
