@@ -6,12 +6,20 @@ export default function LineGraph({
   return (
     <div className="min-w-full flex flex-col gap-1">
       <h1>{label}</h1>
-      <div className="relative h-10">
-        <div className="h-10 w-full border-8 border-black absolute rounded-full" />
+      <div className="relative h-12">
+        <div className="h-12 w-full  bg-black absolute rounded-full" />
+
         <div
-          className="h-10 bg-black absolute rounded-full"
-          style={{ width: `${(currentValue / totalValueAvailable) * 100}%` }}
+          className="h-12 bg-red-500 absolute rounded-full"
+          style={{
+            width: `${
+              currentValue > totalValueAvailable * 0.1
+                ? (currentValue / totalValueAvailable) * 100
+                : 10
+            }%`,
+          }}
         />
+        <div className="h-12 w-full border-8 border-black absolute rounded-full bg-transparent" />
       </div>
     </div>
   );

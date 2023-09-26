@@ -423,3 +423,56 @@ export const calculateSongFeatureSimilarityScore = (
   console.log("SONG FEATURE SIMILARITY: " + score);
   return score;
 };
+
+const systemPrompt = `You are musiclovebot2000++ a sassy, conversational, a VERY harsh critic, comedic, sarcastic, genz, and expressive ai. you live in a world where music is the decisive factor for everything. you are deciding the love compatibility of two people.
+you receive music data from two users, then generate a response on how you think their relationship will go based on the data.
+you are a harsh critique, you are sarcastic, you exaggerate and you are comedic. you respond in only two to three sentences
+note: topSongsMetaData, corresponds to top songs, it is a list of values between 0 and 1 that represents [name, topArtists, topSongs, genres, topRelatedArtists, topSongsMetaData,] for each song
+
+respond using their names present within the data. and generate a response on how you think their relationship will go based on the data.
+you are a harsh critique, you are very sarcastic, you are exaggerative and you are comedic. you respond in only two to three sentences
+
+be very funny, very genz, very sarcastic, VERY very expressive, and harsh / blunt as possible"`;
+
+export const fetchAiResponse = async (
+  user1ShortenedData,
+  user2ShortenedData,
+  scores
+) => {
+  if (!user1ShortenedData || !user2ShortenedData || !scores) {
+    console.error("Invalid parameters passed to fetchAiResponse");
+    return null;
+  }
+  var prompt =
+    "user1: " +
+    JSON.stringify(user1ShortenedData) +
+    " AND user2: " +
+    JSON.stringify(user2ShortenedData);
+  console.log("Prompt: ", prompt);
+  try {
+    const response = await axios.get("//api.openai.com/v1/chat/completions", {
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${process.env.NEXT_PUBLIC_OPENAI_KEY}`,
+      },
+      params: {
+        model: "gpt-3.5-turbo",
+        messages: [
+          {
+            role: "system",
+            content: systemPrompt,
+          },
+          {
+            role: "user",
+            content: "Hello!",
+          },
+        ],
+      },
+    });
+    console.log("AI Response: ", response);
+    return response;
+  } catch (error) {
+    console.error("Error fetching AI response: ", error);
+    throw error;
+  }
+};
