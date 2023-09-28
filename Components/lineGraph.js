@@ -15,7 +15,7 @@ export default function LineGraph({
             width: `${
               currentValue > totalValueAvailable * 0.1
                 ? (currentValue / totalValueAvailable) * 100
-                : 10
+                : 15
             }%`,
           }}
         />

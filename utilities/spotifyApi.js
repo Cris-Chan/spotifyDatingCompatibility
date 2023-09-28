@@ -133,6 +133,7 @@ export const fetchUserData = async (token) => {
       topSongs.map((songObj) => songObj.id),
       token
     );
+    const profileImageUrl = profileResponse.data.images[0].url;
 
     console.log("DATA AQUIRED: ", name, topArtists, topSongs, genres);
     return {
@@ -142,6 +143,7 @@ export const fetchUserData = async (token) => {
       genres,
       topRelatedArtists,
       topSongsMetaData,
+      profileImageUrl,
     };
   } catch (error) {
     console.error("Error fetching user data: ", error);
@@ -437,9 +439,9 @@ be very funny, very genz, very sarcastic, VERY very expressive, and harsh / blun
 export const fetchAiResponse = async (
   user1ShortenedData,
   user2ShortenedData,
-  scores
+  scores = ""
 ) => {
-  if (!user1ShortenedData || !user2ShortenedData || !scores) {
+  if (!user1ShortenedData || !user2ShortenedData) {
     console.error("Invalid parameters passed to fetchAiResponse");
     return null;
   }

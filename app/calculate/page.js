@@ -11,12 +11,14 @@ import {
   calculateSongPopularitySimilarityScore,
   calculateGenreOverlapScore,
   calculateSongFeatureSimilarityScore,
+  fetchAiResponse,
 } from "@/utilities/spotifyApi";
 import { useEffect, useState } from "react";
 
 export default function Calculate() {
   const [currentUserData, setCurrentUserData] = useState({});
   const [buddyUserData, setBuddyUserData] = useState({});
+  const [aiResponse, setAiResponse] = useState("");
 
   useEffect(() => {
     // GET both buddy and user data from local storage
@@ -43,6 +45,7 @@ export default function Calculate() {
       } else {
         console.log(" HMMM: user data is looking weird man: " + buddyData);
       }
+      setAiResponse(fetchAiResponse(currentUserData, buddyUserData));
     }
   }, []);
 
@@ -77,19 +80,16 @@ export default function Calculate() {
   return (
     <PageFadeIn>
       <div className=" text-center text-black flex items-center justify-center min-h-screen min-w-screen">
-        <div className="w-4/5 rounded-3xl h-auto flex flex-col bg-white drop-shadow-harsh items-center p-8">
-          <div className="px-5 flex flex-row min-w-full items-center place-content-between">
+        <div className="w-4/5 rounded-3xl h-auto flex flex-col bg-white max-w-xl drop-shadow-harsh items-center p-8">
+          <div className="px-5 flex flex-row min-w-full items-center place-content-around">
             <Avatar
-              name={"cristian Villanueva"}
-              url={
-                "https://www.njpac.org/wp-content/uploads/2023/06/800x600_ShaneGillis_onsale7.jpg"
-              }
+              name={currentUserData.name}
+              url={currentUserData.profileImageUrl}
             />
+            <h1 className="font-puffy text-4xl">&</h1>
             <Avatar
-              name={"Melissa Huffines"}
-              url={
-                "https://www.njpac.org/wp-content/uploads/2023/06/800x600_ShaneGillis_onsale7.jpg"
-              }
+              name={buddyUserData.name}
+              url={buddyUserData.profileImageUrl}
             />
           </div>
           <div className="mt-6 flex flex-col min-w-full gap-4 items-center justify-center">
@@ -113,6 +113,7 @@ export default function Calculate() {
               totalValueAvailable={100}
               currentValue={topSongSimilarity}
             />
+            <p>{aiResponse}</p>
           </div>
         </div>
       </div>
