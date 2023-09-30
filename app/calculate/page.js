@@ -18,7 +18,6 @@ import { useEffect, useState } from "react";
 export default function Calculate() {
   const [currentUserData, setCurrentUserData] = useState({});
   const [buddyUserData, setBuddyUserData] = useState({});
-  const [aiResponse, setAiResponse] = useState("");
 
   useEffect(() => {
     // GET both buddy and user data from local storage
@@ -45,7 +44,6 @@ export default function Calculate() {
       } else {
         console.log(" HMMM: user data is looking weird man: " + buddyData);
       }
-      setAiResponse(fetchAiResponse(currentUserData, buddyUserData));
     }
   }, []);
 
@@ -113,7 +111,6 @@ export default function Calculate() {
               totalValueAvailable={100}
               currentValue={topSongSimilarity}
             />
-            <p>{aiResponse}</p>
           </div>
         </div>
       </div>
